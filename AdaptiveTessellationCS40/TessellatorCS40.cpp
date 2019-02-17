@@ -505,6 +505,18 @@ void CTessellator::PerEdgeTessellation( CXMMATRIX matWVP,
         cbCS.tess_edge_length_scale = m_tess_edge_len_scale;
         cbCS.num_triangles = m_nVertices/3;
 
+		//
+		// CS:     TessellatorCS40_EdgeFactorCS.hlsl/CSEdgeFactor
+		// Input:  m_pBaseVB
+		// Output: s_pEdgeFactorBufUAV
+		//
+		// Dispatch:
+		// 1. Each thread works on a triangle
+		// 2. Each threadgroup works on 128 triangles
+		//
+		// CS does some basic culling and calculates tessellation factors per triangle
+		// -- output is float4( 02, 10, 21, min )
+		//
         ID3D11ShaderResourceView* aRViews[1] = { m_pBaseVBSRV };
         RunComputeShader( m_pd3dImmediateContext, 
                           s_pEdgeFactorCS,
@@ -517,6 +529,11 @@ void CTessellator::PerEdgeTessellation( CXMMATRIX matWVP,
 
     // How many vertices/indices are needed for the tessellated mesh?
     {
+		//
+		// CS:     TessellatorCS40_NumVerticesIndicesCS.hlsl/CSNumVerticesIndices
+		// Input:  m_pEdgeFactorBufSRV
+		// Output: 
+		//
         INT cbCS[4] = {m_nVertices/3, 0, 0, 0};
         ID3D11ShaderResourceView* aRViews[1] = { m_pEdgeFactorBufSRV };
         RunComputeShader( m_pd3dImmediateContext,
